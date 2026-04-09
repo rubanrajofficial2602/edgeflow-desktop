@@ -15,6 +15,7 @@ win:
   icon: build/icon.png
   publisherName: "EdgeFlow Technologies Pvt. Ltd."
   verifyUpdateCodeSignature: false
+  artifactName: "EdgeFlow-ERP-Setup.exe"
   target:
     - target: nsis
       arch: [x64]
@@ -28,6 +29,10 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: EdgeFlow ERP
+  artifactName: "EdgeFlow-ERP-Setup.exe"
+
+msi:
+  artifactName: "EdgeFlow-ERP.msi"
 
 # ── macOS ──────────────────────────────────────────────────────────────────────
 mac:
@@ -35,6 +40,7 @@ mac:
   category: public.app-category.finance
   darkModeSupport: true
   gatekeeperAssess: false
+  artifactName: "EdgeFlow-ERP-${arch}.dmg"
   target:
     - target: dmg
       arch: [x64, arm64]
@@ -44,6 +50,7 @@ mac:
 dmg:
   title: "EdgeFlow ERP Installer"
   icon: build/icon.png
+  artifactName: "EdgeFlow-ERP-${arch}.dmg"
   contents:
     - x: 410
       y: 150
@@ -58,6 +65,7 @@ linux:
   icon: build/icon.png
   category: Office
   description: AI-powered accounting & GST software for India
+  artifactName: "EdgeFlow-ERP-${arch}.AppImage"
   target:
     - target: AppImage
       arch: [x64]
