@@ -6,7 +6,6 @@ directories:
   output: dist
   buildResources: build
 
-# Files to include in the build
 files:
   - electron/**/*
   - package.json
@@ -17,13 +16,9 @@ win:
   publisherName: "EdgeFlow Technologies Pvt. Ltd."
   verifyUpdateCodeSignature: false
   target:
-    - target: nsis         # Standard .exe installer
+    - target: nsis
       arch: [x64]
-    - target: msi          # MSI for enterprise/IT deployment
-      arch: [x64]
-    - target: msix         # Microsoft Store package
-      arch: [x64]
-    - target: portable     # Portable .exe (no install needed)
+    - target: msi
       arch: [x64]
 
 nsis:
@@ -33,28 +28,17 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: EdgeFlow ERP
-  installerSidebar: build/icon.png
-
-msix:
-  applicationId: EdgeFlowERP
-  backgroundColor: "#060B14"
-  identityName: EdgeFlowTechnologies.EdgeFlowERP
-  publisher: "CN=EdgeFlow Technologies Pvt. Ltd., O=EdgeFlow Technologies, L=Chennai, S=Tamil Nadu, C=IN"
-  publisherDisplayName: "EdgeFlow Technologies Pvt. Ltd."
 
 # ── macOS ──────────────────────────────────────────────────────────────────────
 mac:
   icon: build/icon.png
   category: public.app-category.finance
   darkModeSupport: true
-  hardenedRuntime: true
   gatekeeperAssess: false
-  entitlements: build/entitlements.mac.plist
-  entitlementsInherit: build/entitlements.mac.plist
   target:
-    - target: dmg          # Standard .dmg for direct download
+    - target: dmg
       arch: [x64, arm64]
-    - target: zip          # Auto-updater zip
+    - target: zip
       arch: [x64, arm64]
 
 dmg:
@@ -75,11 +59,9 @@ linux:
   category: Office
   description: AI-powered accounting & GST software for India
   target:
-    - target: AppImage     # Universal Linux app
+    - target: AppImage
       arch: [x64]
-    - target: deb          # Debian/Ubuntu .deb package
-      arch: [x64]
-    - target: rpm          # Red Hat/Fedora .rpm package
+    - target: deb
       arch: [x64]
 
 # ── Publish (GitHub Releases) ─────────────────────────────────────────────────
