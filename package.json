@@ -1,7 +1,7 @@
 {
   "name": "edgeflow-erp-desktop",
   "productName": "EdgeFlow ERP",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "India's AI-powered accounting & GST software — desktop edition",
   "main": "electron/main.js",
   "author": {

@@ -1,11 +1,39 @@
-const { app, BrowserWindow, Menu, shell, ipcMain, dialog, nativeImage } = require("electron");
+const { app, BrowserWindow, Menu, shell, ipcMain, dialog, net } = require("electron");
 const { autoUpdater } = require("electron-updater");
 const path = require("path");
-const os = require("os");
 
 // ── App config ────────────────────────────────────────────────────────────────
-const APP_URL = process.env.EDGEFLOW_URL || "https://rubanrajofficial2602.replit.app/edgeflow-erp/";
+// EDGEFLOW_URL env var overrides everything (set in GitHub Actions secrets for custom domains)
+const APP_URL = process.env.EDGEFLOW_URL
+  || "https://edgeflow-erp.rubanrajofficial2602.replit.app/";
 const IS_DEV  = !app.isPackaged;
+
+// Offline fallback HTML shown when no internet connection
+const OFFLINE_HTML = `data:text/html;charset=utf-8,
+<!DOCTYPE html><html>
+<head><meta charset="utf-8"><title>EdgeFlow ERP — Offline</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#060B14;color:#fff;font-family:system-ui,sans-serif;
+       display:flex;flex-direction:column;align-items:center;justify-content:center;
+       height:100vh;gap:24px;text-align:center;padding:32px}
+  .logo{font-size:64px;margin-bottom:8px}
+  h1{font-size:28px;font-weight:800;background:linear-gradient(135deg,#7c3aed,#db2777);
+     -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  p{color:#94a3b8;font-size:16px;max-width:420px;line-height:1.6}
+  button{margin-top:8px;padding:12px 32px;background:linear-gradient(135deg,#7c3aed,#db2777);
+         border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;
+         cursor:pointer;border-radius:12px}
+  .status{font-size:13px;color:#475569;margin-top:4px}
+</style></head>
+<body>
+  <div class="logo">⚡</div>
+  <h1>EdgeFlow ERP</h1>
+  <p>No internet connection detected. EdgeFlow ERP requires internet access to sync your data and GST filings.</p>
+  <button onclick="location.reload()">🔄 Retry Connection</button>
+  <p class="status">Loading from: ${APP_URL}</p>
+</body></html>`;
+
 
 let mainWindow = null;
 
@@ -48,11 +76,35 @@ function createWindow() {
     if (IS_DEV) mainWindow.webContents.openDevTools({ mode: "detach" });
   });
 
-  mainWindow.loadURL(APP_URL);
+  // Load app with offline fallback
+  if (net.isOnline()) {
+    mainWindow.loadURL(APP_URL);
+  } else {
+    mainWindow.loadURL(OFFLINE_HTML);
+  }
+
+  // If page fails to load (DNS error, server down) — show offline screen
+  mainWindow.webContents.on("did-fail-load", (event, errorCode, errorDescription) => {
+    if (errorCode < -100) { // Network errors
+      mainWindow.loadURL(OFFLINE_HTML);
+    }
+  });
+
+  // Reconnect when internet comes back
+  mainWindow.webContents.on("did-finish-load", () => {
+    // Check if we're showing the offline page and connection is restored
+    mainWindow.webContents.executeJavaScript(
+      `document.title`
+    ).then(title => {
+      if (title.includes("Offline") && net.isOnline()) {
+        mainWindow.loadURL(APP_URL);
+      }
+    }).catch(() => {});
+  });
 
   // Open external links in browser, not in the app
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (!url.startsWith(APP_URL)) {
+    if (!url.startsWith(APP_URL) && !url.startsWith("data:")) {
       shell.openExternal(url);
       return { action: "deny" };
     }
