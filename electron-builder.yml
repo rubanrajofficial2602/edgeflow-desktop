@@ -15,7 +15,6 @@ win:
   icon: build/icon.png
   publisherName: "EdgeFlow Technologies Pvt. Ltd."
   verifyUpdateCodeSignature: false
-  artifactName: "EdgeFlow-ERP-Setup.exe"
   target:
     - target: nsis
       arch: [x64]
@@ -35,17 +34,14 @@ msi:
   artifactName: "EdgeFlow-ERP.msi"
 
 # ── macOS ──────────────────────────────────────────────────────────────────────
+# Each arch built separately in CI via --x64 / --arm64 flags
 mac:
   icon: build/icon.png
   category: public.app-category.finance
   darkModeSupport: true
   gatekeeperAssess: false
-  artifactName: "EdgeFlow-ERP-${arch}.dmg"
   target:
     - target: dmg
-      arch: [x64, arm64]
-    - target: zip
-      arch: [x64, arm64]
 
 dmg:
   title: "EdgeFlow ERP Installer"
