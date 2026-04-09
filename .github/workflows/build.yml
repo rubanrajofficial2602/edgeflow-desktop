@@ -5,34 +5,21 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
-    inputs:
-      version:
-        description: "Version to build (e.g. 3.1.0)"
-        required: false
-        default: "3.1.0"
 
 jobs:
   # ── Windows Build ────────────────────────────────────────────────────────────
   build-windows:
-    name: "🪟 Windows (.exe + .msi + .msix)"
+    name: "🪟 Windows (.exe + .msi)"
     runs-on: windows-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Install dependencies
         run: npm install
-
       - name: Build Windows installers
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: npm run build:win
-
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -40,67 +27,45 @@ jobs:
           path: |
             dist/*.exe
             dist/*.msi
-            dist/*.msix
-            dist/latest.yml
           if-no-files-found: warn
 
   # ── macOS Build ──────────────────────────────────────────────────────────────
   build-macos:
-    name: "🍎 macOS (.dmg Intel + Apple Silicon)"
+    name: "🍎 macOS (.dmg)"
     runs-on: macos-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Install dependencies
         run: npm install
-
-      - name: Build macOS installers
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npm run build:mac
-
+      - name: Build macOS Intel DMG
+        run: npx electron-builder --mac dmg --x64
+      - name: Build macOS Apple Silicon DMG
+        run: npx electron-builder --mac dmg --arm64
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-installers
-          path: |
-            dist/*.dmg
-            dist/*.zip
-            dist/latest-mac.yml
+          path: dist/*.dmg
           if-no-files-found: warn
 
   # ── Linux Build ──────────────────────────────────────────────────────────────
   build-linux:
-    name: "🐧 Linux (.AppImage + .deb + .rpm)"
+    name: "🐧 Linux (.AppImage + .deb)"
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Install system dependencies
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y rpm fakeroot dpkg
-
+        run: sudo apt-get update -y && sudo apt-get install -y fakeroot dpkg
       - name: Install dependencies
         run: npm install
-
       - name: Build Linux packages
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: npm run build:linux
-
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -108,8 +73,6 @@ jobs:
           path: |
             dist/*.AppImage
             dist/*.deb
-            dist/*.rpm
-            dist/latest-linux.yml
           if-no-files-found: warn
 
   # ── Publish GitHub Release ────────────────────────────────────────────────────
@@ -118,9 +81,10 @@ jobs:
     needs: [build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -146,33 +110,16 @@ jobs:
 
             ### 📥 Download for your platform
 
-            | Platform | Download | Notes |
-            |----------|----------|-------|
-            | 🪟 **Windows** | `EdgeFlow-ERP-Setup-*.exe` | Standard installer (recommended) |
-            | 🪟 **Windows Enterprise** | `EdgeFlow-ERP-*.msi` | For IT/admin deployment |
-            | 🏪 **Microsoft Store** | `EdgeFlow-ERP-*.msix` | Submit to Microsoft Store |
-            | 🍎 **macOS Intel** | `EdgeFlow-ERP-*-x64.dmg` | For Intel Macs |
-            | 🍎 **macOS Apple Silicon** | `EdgeFlow-ERP-*-arm64.dmg` | For M1/M2/M3 Macs |
-            | 🐧 **Linux Universal** | `EdgeFlow-ERP-*.AppImage` | Run directly, no install |
-            | 🐧 **Ubuntu/Debian** | `EdgeFlow-ERP-*.deb` | `sudo dpkg -i` |
-            | 🐧 **Fedora/RHEL** | `EdgeFlow-ERP-*.rpm` | `sudo rpm -i` |
+            | Platform | Download |
+            |----------|----------|
+            | 🪟 **Windows** | `EdgeFlow-ERP-Setup.exe` |
+            | 🪟 **Windows Enterprise** | `EdgeFlow-ERP.msi` |
+            | 🍎 **macOS Intel** | `EdgeFlow-ERP-x64.dmg` |
+            | 🍎 **macOS Apple Silicon** | `EdgeFlow-ERP-arm64.dmg` |
+            | 🐧 **Linux** | `EdgeFlow-ERP-x64.AppImage` |
 
             ---
 
-            ### ✨ Features
-            - GST filing (GSTR-1, GSTR-3B)
-            - AI-powered invoice generation
-            - Inventory management
-            - Ledger & P&L reports
-            - Razorpay payment integration
-            - Auto-updates to next version
-
-            ### 🛡️ System Requirements
-            - Windows 10/11 (64-bit)
-            - macOS 12 Monterey or newer (Intel or Apple Silicon)
-            - Linux Ubuntu 20.04+, Fedora 36+
-
             **Support:** support@edgeflow.in
           files: all-dist/**
-          token: ${{ secrets.GH_TOKEN }}
           fail_on_unmatched_files: false
